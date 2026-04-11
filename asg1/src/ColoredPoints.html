@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Change a point color</title>
+  </head>
+
+  <body onload="main()">
+    <canvas id="webgl" width="400" height="400">
+    Please use a browser that supports "canvas"
+    </canvas>
+    <p>
+
+    <button type="button" id="clearButton">Clear Canvas</button>
+    <p>
+    
+    <div style="font-weight: bold;">Drawing Mode:</div>
+    <button type="button" id="pointButton">Squares</button>
+    <button type="button" id="triButton">Triangles</button>
+    <button type="button" id="circleButton">Circles</button>
+    <p>
+    
+    <!-- <button type="button" id="green">Green</button>
+    <button type="button"id="red">Red</button>
+    <button type="button"id="blue">Blue</button> -->
+    
+    <div style="font-weight: bold;">Shape Color:</div>
+    <p>
+    Red <input type="range" min="0" max="100" value="100" class="slider" id="redSlide">
+    
+    Green <input type="range" min="0" max="100" value="100" class="slider" id="greenSlide">
+
+    Blue <input type="range" min="0" max="100" value="100" class="slider" id="blueSlide">
+
+    <p>
+      Shape Size: <input type="range" min="5" max="40" value="5" class="size" id="sizeSlide">
+      (Circles) Segement Count: <input type="range" min="3" max="40" value="10" class="slider" id="segmentSlide">
+    </p>
+
+    <button type="button" id="drawPictureButton">Draw Picture</button>
+    <p>
+
+    <p><strong>Awesome feature:</strong> While dragging, the brush fills in the gaps 
+      between mouse positions to create smoother continuous strokes.</p>
+    
+    <div style="font-weight: bold;">Reference Drawing:</div>
+    <img src="../images/drawing.png" width="300">
+    
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="Point.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="Circle.js"></script>
+    <script src="ColoredPoints.js"></script>
+  </body>
+</html>
