@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CSE 160 Assignment 2 - Blocky Animal</title>
+  </head>
+
+  <body onload="main()">
+    <canvas id="webgl" width="400" height="400">
+    Please use a browser that supports "canvas"
+    </canvas>
+
+    <p id="numdot"> ms: 0 fps: 0 </p>
+
+    <p>Click and drag on the canvas to rotate the cat. Hold Shift and click to trigger its poke reaction.</p>
+
+    Animation:
+    <button type="button" id="animOnButton">ON</button>
+    <button type="button" id="animOffButton">OFF</button>
+    <br><br>
+
+    Global Rotation along Y-axis <input type="range" min="-180" max="180" value="0" class="slider" id="angleSlide">
+    <br>
+    Global Rotation along X-axis<input type="range" min="-90" max="90" value="0" class="slider" id="angleSlideX">
+    <br><br>
+
+    <b>Head and Ears:</b><br>
+    Head <input type="range" min="-40" max="40" value="0" id="headSlide">
+    Ears <input type="range" min="-30" max="30" value="0" id="earSlide">
+    <br><br>
+
+    <b>Tail</b><br>
+    Bottom of Tail <input type="range" min="-60" max="80" value="20" id="tailBaseSlide">
+    <br>
+    Middle of Tail<input type="range" min="-60" max="60" value="0" id="tailMidSlide">
+    <br>
+    Tip of Tail<input type="range" min="-60" max="60" value="0" id="tailTipSlide">
+    <br><br>
+
+    <b>Front Left Leg:</b><br>
+    Leg <input type="range" min="-45" max="45" value="0" id="flUpperSlide">
+    Knee <input type="range" min="0" max="60" value="0" id="flLowerSlide">
+    Paw <input type="range" min="-30" max="30" value="0" id="flPawSlide">
+    <br>
+
+    <b>Front Right Leg:</b><br>
+    Leg <input type="range" min="-45" max="45" value="0" id="frUpperSlide">
+    Knee <input type="range" min="0" max="60" value="0" id="frLowerSlide">
+    Paw <input type="range" min="-30" max="30" value="0" id="frPawSlide">
+    <br>
+
+    <b>Back Left Leg:</b><br>
+    Leg <input type="range" min="-45" max="45" value="0" id="blUpperSlide">
+    Knee <input type="range" min="0" max="60" value="0" id="blLowerSlide">
+    Paw <input type="range" min="-30" max="30" value="0" id="blPawSlide">
+    <br>
+
+    <b>Back Right Leg:</b><br>
+    Leg <input type="range" min="-45" max="45" value="0" id="brUpperSlide">
+    Knee <input type="range" min="0" max="60" value="0" id="brLowerSlide">
+    Paw <input type="range" min="-30" max="30" value="0" id="brPawSlide">
+    <br>
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix.js"></script>
+    <script src="Cube.js"></script>
+    <script src="Cone.js"></script>
+    <script src="BlockyAnimal.js"></script>
+  </body>
+</html>
