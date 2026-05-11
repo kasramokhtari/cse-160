@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CSE 160 Assignment 3 - 3D World</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 16px;
+        color: #222;
+      }
+      #webgl {
+        display: block;
+        border: 1px solid #888;
+        background: #000;
+        outline: none;
+      }
+      /* Two columns: canvas + fps on the left, HUD + help on the right */
+      #gameLayout {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      #leftPanel {
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+      }
+      /* Wrapper so the pointer-lock prompt sits on top of the canvas */
+      #canvasWrap {
+        position: relative;
+        display: inline-block;
+        line-height: 0;
+      }
+      /* Red tint on loss. Behind win/loss text and pointer-lock hint. */
+      #damageOverlay {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        background: rgba(200, 0, 0, 0.30);
+        opacity: 0;
+        transition: opacity 0.35s ease-out;
+        z-index: 1;
+      }
+      #damageOverlay.damage-visible {
+        opacity: 1;
+      }
+      /* Win / loss message + tint (canvas only). Clicks pass through. */
+      #resultOverlay {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        z-index: 2;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.35s ease-out;
+      }
+      #resultOverlay.result-visible {
+        opacity: 1;
+        visibility: visible;
+      }
+      #resultOverlay.showWin {
+        background: rgba(40, 130, 60, 0.42);
+      }
+      #resultOverlay.showLose {
+        background: transparent;
+      }
+      /* Stack text below canvasWrap’s line-height:0 without overlap */
+      #resultOverlay .result-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+        line-height: normal;
+        max-width: 95%;
+        box-sizing: border-box;
+      }
+      #resultOverlay .result-title {
+        margin: 0;
+        font-size: 3rem;
+        font-weight: 800;
+        line-height: 1.12;
+        color: #fff;
+        text-shadow: 0 2px 10px #000;
+        text-align: center;
+      }
+      #resultOverlay .result-subtitle {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 600;
+        line-height: 1.45;
+        color: #f8f8f8;
+        text-shadow: 0 1px 6px #000;
+        text-align: center;
+      }
+      #pointerLockOverlay {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;     /* clicks pass through to the canvas */
+        display: flex;
+        box-sizing: border-box;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 10px;
+        background: transparent;
+        z-index: 3;
+      }
+      #pointerLockOverlay #pointerLockMsg {
+        color: #fff;
+        font-size: 0.82rem;
+        font-weight: 400;
+        margin: 0;
+        text-align: center;
+        text-shadow: 0 1px 3px #000;
+      }
+      #numdot {
+        font-family: monospace;
+        margin: 6px 0;
+      }
+      #sidePanel {
+        width: 740px;
+        flex-shrink: 0;
+        box-sizing: border-box;
+      }
+      .panel {
+        margin-top: 14px;
+        line-height: 1.65;
+      }
+      .panel ul {
+        margin: 8px 0;
+        padding-left: 1.25rem;
+      }
+      .panel p {
+        margin: 10px 0 0 0;
+      }
+      kbd {
+        background: #eee;
+        border: 1px solid #aaa;
+        border-radius: 3px;
+        padding: 1px 5px;
+        font-family: monospace;
+      }
+      #gameHUD {
+        margin: 0;
+        padding: 12px 14px;
+        border: 1px solid #aaa;
+        border-radius: 6px;
+        background: #f5f5f5;
+        font-family: monospace;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      #gameHUD p { margin: 6px 0; }
+      #startBtn {
+        font-size: 14px;
+        padding: 6px 14px;
+        margin-top: 6px;
+        cursor: pointer;
+      }
+      #resetWorldBtn {
+        font-size: 14px;
+        padding: 6px 14px;
+        margin-top: 6px;
+        margin-left: 8px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body onload="main()">
+    <div id="gameLayout">
+      <div id="leftPanel">
+        <div id="canvasWrap">
+          <canvas id="webgl" width="1000" height="650" tabindex="0">
+            Please use a browser that supports "canvas".
+          </canvas>
+          <div id="damageOverlay" aria-hidden="true"></div>
+          <div id="resultOverlay" aria-hidden="true">
+            <div class="result-stack">
+              <p id="resultTitle" class="result-title"></p>
+              <p id="resultSubtitle" class="result-subtitle"></p>
+            </div>
+          </div>
+          <div id="pointerLockOverlay" class="pl-prompt">
+            <p id="pointerLockMsg">Click to enter world</p>
+          </div>
+        </div>
+        <p id="numdot">ms/frame: 0 fps: 0</p>
+      </div>
+
+      <div id="sidePanel">
+        <div id="gameHUD">
+          <b>Reach the Cat Tower!</b>
+          <p id="gameState">State: Not started</p>
+          <p id="gameGoal">Goal: Reach the cat tower before the zombies get you!</p>
+          <p id="gameTimer">Time: 0.0s  /  Remaining: 20.0s</p>
+          <p id="gameScore">Wins: 0   Losses: 0</p>
+          <button type="button" id="startBtn">Start Game</button>
+          <button type="button" id="resetWorldBtn">Reset world</button>
+        </div>
+
+        <div class="panel">
+          <b>Controls</b>
+          <ul>
+            <li>Hold <kbd>W</kbd>/<kbd>S</kbd> to move forward/backward and <kbd>A</kbd>/<kbd>D</kbd> to move side to side (combine for diagonals)</li>
+            <li>Hold <kbd>Q</kbd>/<kbd>E</kbd> to turn left/right</li>
+            <li>Click the <b>world</b> to lock the mouse (first-person look). Move the mouse to look around; press <kbd>ESC</kbd> to unlock the cursor.</li>
+            <li><kbd>X</kbd> places one block, <kbd>Z</kbd> removes one block</li>
+          </ul>
+          <b>Game</b>
+          <p>
+            Press the <b>Start Game</b> button to begin. Your goal is to find and reach
+            the cat tower before the zombies catch you. You have 20 seconds.
+            If you reach it in time without getting caught, you win.
+          </p>
+          <p>
+            Click the <b>Reset world</b> button to restore the original map, or 
+            <b>Restart Game</b> to start a new game.
+          </p>
+          <br>
+          <b>Wow Feature</b>
+          <p>
+            I added a Minecraft-style dynamic sunset sky which happens during the game. 
+            When the game starts, the sky gradually changes from blue during the daytime 
+            to orange sunset as the 20-second timer runs down, making the world feel more 
+            realistic to an actual minecraft world.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix.js"></script>
+
+    <script src="Cube.js"></script>
+    <script src="Cone.js"></script>
+    <script src="Camera.js"></script>
+    <script src="World.js"></script>
+  </body>
+</html>
