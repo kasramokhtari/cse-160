@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Assignment 5: Three.js Minecraft World</title>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 16px;
+      color: #222;
+      background: #fff;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin: 0 0 14px 0;
+    }
+
+    #page {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    #world-container {
+      position: relative;
+      width: 100%;
+      max-width: 1000px;
+      height: 600px;
+      margin: 0 auto;
+      border: 1px solid #888;
+      background: #000;
+      overflow: hidden;
+      line-height: 0;
+    }
+    #world-container canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 8px 10px;
+      background: rgba(0, 0, 0, 0.45);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.5;
+      pointer-events: none;
+      z-index: 2;
+    }
+    #hud b { font-size: 13px; }
+    #hud kbd {
+      background: #222;
+      border: 1px solid #555;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    #lockPrompt {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      z-index: 3;
+    }
+    #lockPrompt p {
+      color: #fff;
+      font-size: 22px;
+      text-shadow: 0 2px 6px #000;
+      line-height: normal;
+    }
+    #lockPrompt.hidden { display: none; }
+
+    #resultOverlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 5;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.35s ease-out;
+    }
+    #resultOverlay.result-visible {
+      visibility: visible;
+      opacity: 1;
+    }
+    #resultOverlay.win  { background: rgba(40, 130, 60, 0.42); }
+    #resultOverlay.lose { background: rgba(200, 0, 0, 0.32); }
+    #resultOverlay .result-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      text-align: center;
+      line-height: normal;
+    }
+    #resultOverlay .result-title {
+      margin: 0;
+      color: #fff;
+      font-size: 3rem;
+      font-weight: 800;
+      text-shadow: 0 2px 10px #000;
+    }
+    #resultOverlay .result-subtitle {
+      margin: 0;
+      color: #f8f8f8;
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-shadow: 0 1px 6px #000;
+    }
+
+    #stats {
+      font-family: monospace;
+      font-size: 13px;
+      color: #555;
+      margin: 8px 0 0 0;
+    }
+
+    #gameHUD {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border: 1px solid #aaa;
+      border-radius: 6px;
+      background: #f5f5f5;
+    }
+    #gameHUD p { margin: 6px 0; }
+    #gameHUD button {
+      font-size: 14px;
+      padding: 6px 14px;
+      margin-top: 8px;
+      margin-right: 8px;
+      cursor: pointer;
+      background: #2e6b2e;
+      color: #fff;
+      border: 1px solid #2e6b2e;
+      border-radius: 4px;
+    }
+    #gameHUD button:hover { background: #3e8b3e; }
+    #resetWorldBtn {
+      background: #555 !important;
+      border-color: #555 !important;
+    }
+    #resetWorldBtn:hover { background: #6d6d6d !important; }
+
+    .panel {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      line-height: 1.6;
+    }
+    .panel h2 {
+      font-size: 1.15rem;
+      margin: 0 0 8px 0;
+    }
+    .panel ul { margin: 8px 0; padding-left: 1.25rem; }
+    .panel p { margin: 8px 0 0 0; }
+    kbd {
+      background: #eee;
+      border: 1px solid #aaa;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: monospace;
+    }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.149.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <div id="page">
+    <div id="world-container">
+      <div id="hud">
+        <b>Three.js World</b><br>
+        <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk<br>
+        Mouse to look &nbsp;&nbsp; <kbd>ESC</kbd> to release
+      </div>
+
+      <div id="lockPrompt">
+        <p>Click to enter the world</p>
+      </div>
+
+      <div id="resultOverlay" aria-hidden="true">
+        <div class="result-stack">
+          <p id="resultTitle" class="result-title"></p>
+          <p id="resultSubtitle" class="result-subtitle"></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="gameHUD">
+      <b>Reach the Cat Tower!</b>
+      <p id="gameGoal">Goal: reach the cat on the cobble shrine before a zombie catches you or time runs out.</p>
+      <p id="gameState">State: not started</p>
+      <p id="gameTimer">Time remaining: --</p>
+      <p id="gameScore">Wins: 0   Losses: 0</p>
+      <button type="button" id="startBtn">Start Game</button>
+      <button type="button" id="resetWorldBtn">Reset World</button>
+    </div>
+
+    <div class="panel">
+      <h2>Controls</h2>
+      <ul>
+        <li>Click the world to lock the mouse for first-person look. Press <kbd>ESC</kbd> to release the cursor.</li>
+        <li>Hold <kbd>W</kbd>/<kbd>S</kbd> to move forward/backward and <kbd>A</kbd>/<kbd>D</kbd> to strafe.</li>
+        <li>Move the mouse to look around the world.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>The Game</h2>
+      <p>
+        Press <b>Start Game</b> to begin. Slow zombies spawn around the map and
+        chase you. Your goal is to navigate around the walls, pillars, and trees
+        to reach the cat resting on the cobble shrine in the corner before a
+        zombie catches you or your 20 seconds run out.
+      </p>
+      <p>
+        Press <b>Reset World</b> to reload the world back to its starting state,
+        or <b>Restart Game</b> to play another round.
+      </p>
+    </div>
+
+    <div class="panel">
+      <h2>Wow Feature</h2>
+      <p>
+        Wow Feature: I added a Minecraft-style rescue game where animated
+        zombies chase the player while the player tries to reach the cat tower
+        before time runs out. As the timer runs down, the lighting and sky
+        gradually shift into a sunset.
+      </p>
+    </div>
+  </div>
+
+  <script type="module" src="./asg5.js"></script>
+</body>
+</html>
